@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Synapse RAG Arayüzü</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; background: #f4f4f9; }
+        #chat { height: 400px; background: white; padding: 20px; border-radius: 8px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .message { margin-bottom: 15px; padding: 10px; border-radius: 5px; }
+        .user { background: #007bff; color: white; text-align: right; margin-left: 20%; }
+        .ai { background: #e9ecef; color: black; margin-right: 20%; }
+        input { width: 75%; padding: 10px; border-radius: 4px; border: 1px solid #ccc; }
+        button { width: 20%; padding: 10px; border-radius: 4px; background: #28a745; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>🧠 Synapse Yapay Zeka</h2>
+    <div id="chat"></div>
+    <div style="display: flex; justify-content: space-between;">
+        <input type="text" id="question" placeholder="Seni dinliyorum..." onkeypress="if(event.key === 'Enter') ask()">
+        <button onclick="ask()">Sor</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Kendi oluşturduğun kullanıcı ID'sini buraya gir
+        const userId = 'ba5282ea-99db-409a-86bc-5f1438899c8e'; 
+        const socket = io({ auth: { userId } });
+        
+        const chat = document.getElementById('chat');
+        let currentAiDiv = null;
+
+        function ask() {
+            const input = document.getElementById('question');
+            if(!input.value) return;
+            
+            chat.innerHTML += '<div class="message user">' + input.value + '</div>';
+            socket.emit('ask', { question: input.value });
+            input.value = '';
+            
+            // AI cevabı için yeni bir boş kutu aç
+            currentAiDiv = document.createElement('div');
+            currentAiDiv.className = 'message ai';
+            chat.appendChild(currentAiDiv);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        socket.on('answer_chunk', (text) => {
+            if(currentAiDiv) {
+                // Gelen kelimeleri yan yana ekle (Streaming efekti)
+                currentAiDiv.innerHTML += text;
+                chat.scrollTop = chat.scrollHeight;
+            }
+        });
+
+        socket.on('answer_done', () => {
+            currentAiDiv = null; // Cümle bitti, kutuyu kapat
+        });
+    </script>
+</body>
+</html>
