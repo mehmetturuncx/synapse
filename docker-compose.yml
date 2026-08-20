@@ -18,6 +18,30 @@ services:
     container_name: synapse_redis
     ports:
       - "6379:6379"
+  
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    command: npx tsx src/index.ts
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://postgres:123@db:5432/synapsedb?schema=public
+      - REDIS_HOST=redis
+      - OLLAMA_HOST=http://host.docker.internal:11434 
+  
+  worker:
+    build: .
+    command: npx tsx src/worker.ts
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://postgres:123@db:5432/synapsedb?schema=public
+      - REDIS_HOST=redis
+      - OLLAMA_HOST=http://host.docker.internal:11434
 
 volumes:
   synapse_pgdata:
