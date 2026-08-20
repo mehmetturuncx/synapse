@@ -8,7 +8,7 @@ const adapter = new PrismaPg({ connectionString:process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 const connection = {
-    host: 'localhost',
+    host: process.env.REDIS_HOST || 'localhost',
     port: 6379
 }
 

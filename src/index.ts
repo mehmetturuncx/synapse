@@ -28,7 +28,7 @@ io.on('connection', (socket) => {
         const question = data.question;
         try {
             const response = await
-                fetch('http://localhost:11434/api/embeddings', {
+                fetch(process.env.OLLAMA_HOST + '/api/embeddings', {
                     method: 'POST',
                     headers: {
                         'Content-Type':
