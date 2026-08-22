@@ -5,7 +5,9 @@ import { PrismaClient } from './generated/prisma/client/client.js';
 import { document_queue } from './queue.js';
 import { createServer } from 'node:http';
 import { Server } from 'socket.io';
-import ollama from 'ollama';
+import { Ollama } from 'ollama';
+
+const ollama = new Ollama({ host: process.env.OLLAMA_HOST || 'http://127.0.0.1:11434' });
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -113,7 +115,7 @@ app.post('/search', async (req: Request, res: Response) => {
 
     try {
         const response = await
-            fetch('http://localhost:11434/api/embeddings', {
+            fetch(process.env.OLLAMA_HOST + '/api/embeddings', {
                 method: 'POST',
                 headers: {
                     'Content-Type':

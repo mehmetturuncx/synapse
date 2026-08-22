@@ -25,7 +25,7 @@ const docWorker = new Worker(document_queue.name, async (job: Job) => {
         console.log(`[WORKER] Content lenght: ${doc.content.length} character`);
 
         console.log("[WORKER] Text sending to Ollama...");
-        const response = await fetch('http://localhost:11434/api/embeddings', {
+        const response = await fetch(process.env.OLLAMA_HOST + '/api/embeddings', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
