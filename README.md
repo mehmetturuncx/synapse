@@ -5,14 +5,15 @@ Synapse is a **100% local, offline-first** Artificial Intelligence backend archi
 Built with modern AI Engineering principles, it uses a **Retrieval-Augmented Generation (RAG)** pipeline without sending a single byte of your data to external APIs like ChatGPT or Claude. Everything runs completely on your local machine.
 
 ## 🚀 Key Features
+- **Automatic File Sync (Watcher):** Point Synapse to your local notes folder (like an Obsidian vault). Any `.md` file you create or update is instantly detected, read, and vectorized automatically. No manual uploads needed!
 - **Semantic Vector Search:** Uses `pgvector` and Cosine Similarity to find the mathematical meaning behind questions rather than relying on exact keyword matches.
-- **Microservices Architecture:** Heavy tasks (like embedding large documents) are offloaded to background workers using **Redis** and **BullMQ**, ensuring the main API remains lightning fast.
+- **Microservices Architecture:** Heavy tasks (like embedding large documents) are offloaded to background workers using **Redis** and **BullMQ**, ensuring the main system remains lightning fast.
 - **Real-Time Streaming:** Generates AI responses word-by-word via **WebSockets**, providing a ChatGPT-like typing experience in real-time.
-- **Fully Containerized:** The entire system (API, Worker, Postgres, Redis) is orchestrated with a single `docker-compose up` command.
+- **Fully Containerized:** The entire system (API, Worker, Watcher, Postgres, Redis) is orchestrated with a single `docker-compose up` command.
 - **Local LLMs:** Powered by **Ollama**, utilizing powerful open-source models like `llama3.1` and `nomic-embed-text`.
 
 ## 🛠️ Tech Stack
-- **Backend:** Node.js, Express, TypeScript, Socket.io
+- **Backend:** Node.js, Express, TypeScript, Socket.io, Chokidar (File Watcher)
 - **Database & ORM:** PostgreSQL, `pgvector`, Prisma ORM v7
 - **Queue System:** Redis, BullMQ
 - **AI & Embeddings:** Ollama
@@ -31,40 +32,38 @@ ollama pull llama3.1
 ollama pull nomic-embed-text
 ```
 
-### 3. Run the System
+### 3. Setup Environment Variables
+Create a `.env` file in the root directory and add the path to the folder where you keep your markdown notes:
+```env
+LOCAL_NOTES_DIR="C:\Users\YourName\Notes"
+WATCH_DIR=/app/notes
+DATABASE_URL=postgresql://postgres:123@db:5432/synapsedb?schema=public
+REDIS_HOST=redis
+OLLAMA_HOST=http://host.docker.internal:11434
+```
+
+### 4. Run the System
 Navigate to the project directory and run Docker Compose:
 ```bash
 docker-compose up -d --build
 ```
-This single command will spin up:
-- PostgreSQL (with `pgvector` enabled)
-- Redis
-- Synapse API Server (Port `3000`)
-- Synapse Background Worker
+This single command will spin up all 5 containers (DB, Redis, API, Worker, Watcher).
 
-### 4. Database Setup
+### 5. Database Setup (First Time Only)
 Once the containers are running, push the Prisma schema to initialize the database tables:
 ```bash
 npx prisma migrate dev --name init
 ```
-*(You can use `npx prisma studio` to manually create your first User and copy their UUID).*
 
 ## 🎮 How to Use
 
-### 1. Upload a Document (API)
-Send a `POST` request to `http://localhost:3000/upload` with a JSON payload:
-```json
-{
-    "userId": "YOUR-UUID-HERE",
-    "title": "My First Note",
-    "content": "This is a test note that the AI will remember."
-}
-```
-*The API will return instantly. Behind the scenes, the BullMQ Worker will vectorize the text using `nomic-embed-text` and save the 768-dimensional vector array to PostgreSQL.*
+### 1. Just Take Notes!
+You don't need to manually upload anything. Just create or edit a `.md` file in your `LOCAL_NOTES_DIR` (e.g., using Obsidian or Notepad).
+*Behind the scenes, the Synapse Watcher will detect the change, read the file, and send it to the BullMQ Worker to be vectorized using `nomic-embed-text` and saved to PostgreSQL.*
 
 ### 2. Ask a Question (WebSocket Chat)
 Open `http://localhost:3000` in your browser. This will load the built-in HTML interface.
-Ask a question like: *"What was my first note about?"*
+Ask a question like: *"What was my last note about?"*
 
 **The RAG Pipeline in action:**
 1. The system vectorizes your question.
